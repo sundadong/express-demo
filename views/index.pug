@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title} 
+    a(href="/users") go to users
+  form(id="myForm" class="form" action="/upload" method="post" enctype="multipart/form-data")
+    input(id="myfile" type="file" name="myfile")
+    button(id="submit") confirm
+  script(src="javascripts/index.js")
