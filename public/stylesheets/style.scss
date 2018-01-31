@@ -8,3 +8,13 @@ body {
 a {
   color: $primary-color;
 }
+
+
+.chat-container,
+.msg-form {
+  display: none;
+}
+.chat-container p {
+  word-wrap: break-word;
+  white-space: pre;
+}

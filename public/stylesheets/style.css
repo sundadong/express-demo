@@ -5,4 +5,12 @@ body {
 a {
   color: #f00; }
 
+.chat-container,
+.msg-form {
+  display: none; }
+
+.chat-container p {
+  word-wrap: break-word;
+  white-space: pre; }
+
 /*# sourceMappingURL=style.css.map */

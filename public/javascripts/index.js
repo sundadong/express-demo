@@ -1,41 +1,100 @@
-var btnSubmit = document.getElementById('submit');
+$(function(){
+  var $loginForm = $('#login-form'),
+    $username = $('#username'),
+    $btnLogin = $('#btn-login'),
+    $chatContainer = $('#chat-container'),
+    $msgForm = $('#msg-form'),
+    $msgText = $('#msg-text'),
+    $btnSend = $('#btn-send');
 
-btnSubmit.onclick = function(e){
-  e.preventDefault();
+  var ws = null;
 
-  // var username = document.getElementById('username').value;
-  // var password = document.getElementById('password').value;
+  window.onbeforeunload = function(){
+    ws && ws.close();
+  }
 
-  var xhr = new XMLHttpRequest();
+  $btnLogin.on('click', function(){
+    var username = $username.val().trim();
 
-  console.log(document.getElementById('myForm'));
-
-  xhr.onreadystatechange = function(res){
-    if (xhr.readyState == 4) {
-      if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
-        var data = JSON.parse(xhr.responseText);
-        if(data.status == 200){
-          var img = document.createElement('img');
-          img.src = data.data.url;
-
-          document.body.appendChild(img);
-        }
-      } else {
-        console.log("Response was unsuccessful:" + xhr.status);
-      }
+    if(!username){
+      return;
     }
-  };
 
-  xhr.open('POST', '/upload', true);
-  // xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=utf-8');
-  // xhr.setRequestHeader('Content-Type', 'multipart/form-data; charset=utf-8');
+    createConnection();
 
-  var data = new FormData();
-  data.append('myfile', document.getElementById('myForm').myfile.files[0])
-  // var data = new URLSearchParams();
+    $loginForm.hide();
+    $chatContainer.show();
+    $msgForm.show();
+  });
 
-  // data.append('username', username);
-  // data.append('password', password);
+  $btnSend.on('click', function(){
+    var msg = $msgText.val().trim();
 
-  xhr.send(data);
-}
+    if(!msg){
+      return;
+    }
+
+    sendMsg({
+      type: 'msg',
+      data: msg
+    });
+  });
+
+  function createConnection(){
+    var username = $username.val().trim();
+
+    ws = new WebSocket('ws://localhost:3000');
+
+    ws.onopen = function(evt){
+      console.log('Connectioned: ');
+      sendMsg({
+        type: 'username',
+        data: username
+      });
+    };
+
+    ws.onmessage = function(evt){
+      var data = JSON.parse(evt.data);
+
+      switch(data.type) {
+        case 'online':
+        case 'offline':
+          handleBoast(data);
+          break;
+        case 'msg':
+          handleMsg(data);
+          break;
+        default:
+          // 位置类型
+          console.log(evt.data);
+          break;
+      }
+      console.log('Received: ' + evt.data);
+    };
+
+    ws.onclose = function(evt){
+      console.log('Closed: ' + evt.code);
+    };
+
+    ws.onerror = function(evt){
+      console.log('Errror: ' + evt.code)
+    };
+  }
+
+  function sendMsg(data){
+    if(ws.readyState === 1){
+      ws.send(JSON.stringify(data));
+    }
+  }
+
+  function handleBoast(data){
+    var $html = '<p>'+ new Date().toLocaleString() + ': ' + data.from + (data.type === 'online'?'上线了':'下线了') +'</p>';
+    $chatContainer.append($html);
+  }
+
+  function handleMsg(data){
+    var $html = '<p>'+ new Date().toLocaleString() + ': ' + data.from + '：' + data.data +'</p>';
+    $chatContainer.append($html);
+    $msgText.val('');
+  }
+});
